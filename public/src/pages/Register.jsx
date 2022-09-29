@@ -24,6 +24,12 @@ function Register() {
     theme: "dark",
   }
 
+  useEffect(() => {
+    if(localStorage.getItem('chat-app-user')) {
+      navigate('/')
+    }
+  }, [])
+
   const handleSubmit = async (event) => {
     event.preventDefault()
     if(handleValidation()) {
@@ -113,7 +119,7 @@ function Register() {
 }
 
 const FormContainer = styled.div`
-  height:: 100vh;
+  height: 100vh;
   width: 100vw;
   display: flex;
   flex-direction: column;
