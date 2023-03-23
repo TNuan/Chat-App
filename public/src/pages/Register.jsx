@@ -79,6 +79,8 @@ function Register() {
   const handleChange = (event) => {
     setValue({ ...values, [event.target.name]: event.target.value })
   }
+
+  
   return (
     <>
       <FormContainer>
