@@ -29,7 +29,7 @@ export default function SetAvatar() {
             navigate('/login')
             }
         })().catch(console.error)
-    }, [])
+    }, [navigate])
 
   const setProfilePicture = async () => {
     if (selectedAvatar === undefined) {
@@ -51,19 +51,17 @@ export default function SetAvatar() {
     }
   }
 
-  useEffect(() => {
-        (async() => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(async () => {
             const data = []
-            for (let i = 0; i < 4; i++) {
-                const image = await axios.get(
-                    `${api}/${Math.round(Math.random() * 1000)}`
-                )    
+            for (let i = 0; i < 1; i++) {
+                const image = await axios.get( `${api}/${Math.round(Math.random() * 1000)}`)   
+                // console.log("test" + i)
                 const buffer = new Buffer(image.data)
                 data.push(buffer.toString("base64"))
             }
             setAvatars(data)
             setIsLoading(false)
-        })().catch(console.error)
     }, [])
 
   return (
