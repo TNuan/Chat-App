@@ -22,7 +22,9 @@ export default function ChatInput() {
         <div className="button-container">
             <div className="emoji">
                 <BsEmojiSmileFill onClick={handleEmojiPickerhideShow}/>
-                { showEmojiPicker && <Picker onEmojiClick={handleEmojiClick}/> }
+                <div className="emoji-picker-react">
+                  { showEmojiPicker && <Picker onEmojiClick={handleEmojiClick}/> }
+                </div>
             </div>
         </div>
         <form className="input-container">
@@ -50,7 +52,7 @@ const Container = styled.div`
         color: white;
         gap: 1rem;
         .emoji {
-            position: absolute;
+            position: relative;
             svg {
                 font-size: 1.5rem;
                 color: #ffff00c8;
@@ -58,16 +60,15 @@ const Container = styled.div`
             }
             .emoji-picker-react {
                 position: absolute;
-
-                top: -450px;
+                top: -470px;
                 background-color: #080420;
                 box-shadow: 0 5px 10px #9a86f3;
                 border-color: #9a86f3;
                 .emoji-scroll-wrapper::-webkit-scrollbar {
                 background-color: #080420;
-                width: 5px;
+                width: 5px; 
                 &-thumb {
-                    background-color: #9a86f3;
+                  background-color: #9a86f3;
                 }
                 }
                 .emoji-categories {
