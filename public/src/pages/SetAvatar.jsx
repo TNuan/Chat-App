@@ -52,7 +52,7 @@ export default function SetAvatar() {
   }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(async () => {
+  useEffect(() => {(async () => {
             const data = []
             for (let i = 0; i < 1; i++) {
                 const image = await axios.get( `${api}/${Math.round(Math.random() * 1000)}`)   
@@ -62,7 +62,7 @@ export default function SetAvatar() {
             }
             setAvatars(data)
             setIsLoading(false)
-    }, [])
+    })()}, [])
 
   return (
     <>
