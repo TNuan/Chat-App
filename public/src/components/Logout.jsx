@@ -30,4 +30,5 @@ const Button = styled.button`
     svg {
         font-size: 1.3rem;
         color: #ebe7ff;
+    }
 `
