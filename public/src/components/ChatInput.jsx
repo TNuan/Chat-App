@@ -13,8 +13,6 @@ export default function ChatInput({handleSendMsg}) {
     }
 
     const handleEmojiClick = (emojiObject, event) => {
-        // console.log(" handleEmojiClick ok")
-        // console.log(emojiObject.emoji);
         let message = msg;
         message += emojiObject.emoji
         setMsg(message)
@@ -64,7 +62,7 @@ const Container = styled.div`
         .emoji {
             position: relative;
             svg {
-                font-size: 1.5rem;
+                font-size: 1.2rem;
                 color: #ffff00c8;
                 cursor: pointer;
             }
@@ -110,7 +108,7 @@ const Container = styled.div`
       color: white;
       border: none;
       padding-left: 1rem;
-      font-size: 1.2rem;
+      font-size: 1rem;
       &::selection {
         background-color: #9a86f3;
       }
