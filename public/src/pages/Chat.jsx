@@ -45,7 +45,6 @@ function Chat() {
           setContacts(data.data)
         } else {
           navigate('/setAvatar')
-
         }
       }
     })()
