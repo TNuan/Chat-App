@@ -15,6 +15,8 @@ module.exports.addMessage = async (req, res, next) => {
     }
 }
 
+module.exports.removeMessage = async (req, res, next) => {}
+
 module.exports.getAllMessage = async (req, res, next) => {
     try {
         const {from, to} = req.body
@@ -27,6 +29,7 @@ module.exports.getAllMessage = async (req, res, next) => {
             .sort({ updateAt: 1})
             const projectMessage = messages.map((msg) => {
                 return {
+                    _id: msg._id,
                     fromSelf: msg.sender.toString() === from,
                     message: msg.message.text,
                 }
