@@ -3,7 +3,7 @@ import styled from 'styled-components'
 import Logout from './Logout'
 import ChatInput from './ChatInput'
 import axios from 'axios'
-import { getAllMessageRoute, sendMessageRoute } from '../utils/APIRoutes'
+import { getAllMessageRoute, sendMessageRoute, removeMessageRoute } from '../utils/APIRoutes'
 import { v4 as uuidv4 } from 'uuid'
 import { CiMenuKebab } from 'react-icons/ci'
 import { BsReply } from 'react-icons/bs'
@@ -22,7 +22,6 @@ export default function ChatContainer({currentChat, currentUser, socket}) {
      })
      setMessage(response.data)
     }
-     
   })()}, [currentChat])
 
 
@@ -41,14 +40,18 @@ export default function ChatContainer({currentChat, currentUser, socket}) {
 
     const msgs = [...message]
     msgs.push({
+      removed: false,
       fromSelf: true,
       message: msg
     })
     setMessage(msgs)
   }
 
-  const handleContextMenu = (message) => {
-    console.log('handleContextMenu element: ' + message._id)
+  const handleContextMenu = async (msg) => {
+    await axios.delete(removeMessageRoute, { message: msg })
+
+    socket.current.emit('remove-message', { message: msg })
+
   }
 
   useEffect(() => {
@@ -85,22 +88,22 @@ export default function ChatContainer({currentChat, currentUser, socket}) {
         </div>
         <div className="chat-message">
         {
-          message.map((message, index) => {
+          message.map((message) => {
               return (
                 <div ref={scrollRef} key={uuidv4()}>
-                  <div className={`message ${message.fromSelf ? 'sended' : 'recieved'}`} >
+                  <div className={`message ${message.fromSelf ? 'sended' : 'recieved'} ${message.removed ? 'removed':''}`} >
                     <div >
                         <BsReply onClick={() => handleContextMenu(message)}/>
                     </div>
-                    <div >
-                        <CiMenuKebab/>
-                    </div>
-                    <div className="context-menu">
-                      <ul>
-                        <li>remove</li>
-                        <li>reply</li>
-                        <li>forward</li>
-                      </ul>
+                    <div className='menu-icon'>
+                        <CiMenuKebab onClick={(e) => {e.target.classList.add('show-menu')}}/>
+                        <div className='context-menu'>
+                          <ul>
+                              <li onClick={(e) => {console.log(e.target)}}>remove</li>
+                              <li>reply</li>
+                              <li>forward</li>
+                            </ul>
+                        </div>
                     </div>
                     <div className="content">
                       <p>
@@ -119,8 +122,6 @@ export default function ChatContainer({currentChat, currentUser, socket}) {
     }
     </>
   )
-  
-  
 }
 
 const Container = styled.div`
@@ -149,7 +150,6 @@ const Container = styled.div`
       .username {
         h3 {
           color: white;
-
         }
       }
     }
@@ -190,31 +190,45 @@ const Container = styled.div`
           max-width: 70%;
         }
       }
-      .context-menu {
-        background-color: #413571;
-        width: 20%;
-        border-radius: 12px;
-        color: #ffff;
-        overflow: hidden;
-        display: none;
-        ul {
-          li {
-            cursor: pointer;
-            list-style: none;
-            padding: 0.5rem 0.5rem;
-            font-size: 1rem;
-            color: #d1d1d1;
-            &:hover {
-              color: #ffff;
-              background-color: #9a86f3;
+      .menu-icon {
+        position: relative;
+        width: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        .context-menu {
+          z-index: 100;
+          background-color: #413571;
+          width: 100px;
+          border-radius: 12px;
+          color: #ffff;
+          overflow: hidden;
+          position: absolute;
+          top: 0;
+          visibility: hidden;
+          ul {
+            li {
+              cursor: pointer;
+              list-style: none;
+              padding: 0.5rem 0.5rem;
+              font-size: 1rem;
+              color: #d1d1d1;
+              &:hover {
+                color: #ffff;
+                background-color: #9a86f3;
+              }
             }
           }
+        }
+        .show-menu + .context-menu{
+          visibility: visible;
         }
       }
     }
     .message:hover svg {
-        visibility: visible;
-      }
+      visibility: visible;
+    }
 
     .sended {
       justify-content: flex-end;
@@ -224,6 +238,9 @@ const Container = styled.div`
         -webkit-transform: scaleX(-1);
         -ms-transform: scaleX(-1);
       }
+      .context-menu {
+        right: 0;
+      }
       .content {
         background-color: #4f04ff21;
       }
@@ -231,6 +248,9 @@ const Container = styled.div`
     .recieved {
       justify-content: flex-end;
       flex-direction: row-reverse;
+      .context-menu {
+        left: 0;
+      }
       .content {
         background-color: #9900ff20;
       }

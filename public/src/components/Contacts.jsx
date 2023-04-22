@@ -94,7 +94,7 @@ const Container = styled.div`
         .contact {
             background-color: #ffffff39;
             min-height: 5rem;
-            width: 50%;
+            width: 90%;
             cursor: pointer;
             border-radius: 0.2rem;
             padding: 0.4rem;
