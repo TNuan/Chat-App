@@ -3,7 +3,7 @@ import styled from 'styled-components'
 import Logout from './Logout'
 import ChatInput from './ChatInput'
 import axios from 'axios'
-import { getAllMessageRoute, sendMessageRoute, removeMessageRoute } from '../utils/APIRoutes'
+import { getAllMessageRoute, sendMessageRoute, updateMessageRoute } from '../utils/APIRoutes'
 import { v4 as uuidv4 } from 'uuid'
 import { CiMenuKebab } from 'react-icons/ci'
 import { BsReply } from 'react-icons/bs'
@@ -33,14 +33,13 @@ export default function ChatContainer({currentChat, currentUser, socket}) {
     })
 
     socket.current.emit('send-msg', {
-      to: currentChat._id,
       from: currentUser._id,
+      to: currentChat._id,
       message: msg
     })
 
     const msgs = [...message]
     msgs.push({
-      removed: false,
       fromSelf: true,
       message: msg
     })
@@ -48,10 +47,13 @@ export default function ChatContainer({currentChat, currentUser, socket}) {
   }
 
   const handleContextMenu = async (msg) => {
-    await axios.delete(removeMessageRoute, { message: msg })
+    const updatedMessage = {
+      updatedMessageId: msg._id,
+      fromSelf: msg.fromSelf
+    }
+    await axios.put(updateMessageRoute, updatedMessage)
 
     socket.current.emit('remove-message', { message: msg })
-
   }
 
   useEffect(() => {
@@ -93,17 +95,23 @@ export default function ChatContainer({currentChat, currentUser, socket}) {
                 <div ref={scrollRef} key={uuidv4()}>
                   <div className={`message ${message.fromSelf ? 'sended' : 'recieved'} ${message.removed ? 'removed':''}`} >
                     <div >
-                        <BsReply onClick={() => handleContextMenu(message)}/>
+                        <BsReply/>
                     </div>
                     <div className='menu-icon'>
                         <CiMenuKebab onClick={(e) => {e.target.classList.add('show-menu')}}/>
-                        <div className='context-menu'>
-                          <ul>
-                              <li onClick={(e) => {console.log(e.target)}}>remove</li>
-                              <li>reply</li>
-                              <li>forward</li>
-                            </ul>
-                        </div>
+                        {
+                          <div className='context-menu'>
+                            <ul>
+                                <li onClick={() => { 
+                                  document.querySelector('.show-menu').classList.remove('show-menu')
+                                  handleContextMenu(message)
+                                }}>remove</li>
+                                <li>reply</li>
+                                <li>forward</li>
+                              </ul>
+                          </div>
+                        }
+                        
                     </div>
                     <div className="content">
                       <p>
@@ -120,7 +128,7 @@ export default function ChatContainer({currentChat, currentUser, socket}) {
       </Container>
       )
     }
-    </>
+    </>  
   )
 }
 

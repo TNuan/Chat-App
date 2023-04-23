@@ -7,6 +7,8 @@ const messageSchema = new mongoose.Schema(
         },
         user: Array,
         sender: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+        _removed: { type: Boolean, default: false, required: true},
+        removedFromSelf: { type: Boolean, default: false, required: true}
     },
     {
         timestamps: true,            
