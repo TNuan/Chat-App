@@ -12,6 +12,7 @@ export default function ChatContainer({currentChat, currentUser, socket}) {
 
   const [message, setMessage] = useState([])
   const [arrivalMessage, setArrivalMessage] = useState(null)
+  const [updateMessage, setUpdateMessage] = useState(null)
   const scrollRef = useRef()
 
   useEffect(() => {(async () => {
@@ -41,6 +42,8 @@ export default function ChatContainer({currentChat, currentUser, socket}) {
     const msgs = [...message]
     msgs.push({
       fromSelf: true,
+      _removed: false,
+      removedFromSelf: false,
       message: msg
     })
     setMessage(msgs)
@@ -53,7 +56,7 @@ export default function ChatContainer({currentChat, currentUser, socket}) {
     }
     await axios.put(updateMessageRoute, updatedMessage)
 
-    socket.current.emit('remove-message', { message: msg })
+    socket.current.emit('update-message', { message: msg })
   }
 
   useEffect(() => {
@@ -61,12 +64,20 @@ export default function ChatContainer({currentChat, currentUser, socket}) {
       socket.current.on('msg-recieve', (msg) => {
         setArrivalMessage({ fromSelf: false, message: msg })
       })
+      
+      socket.current.on('update-message', (msg) => {
+        setUpdateMessage(msg)
+      })
     }
   }, [])
 
   useEffect(() => {
     arrivalMessage && setMessage((prev) => [...prev, arrivalMessage])
   }, [arrivalMessage])
+
+  useEffect(() => {
+    updateMessage && setMessage((prev) => [...prev, updateMessage])
+  }, [updateMessage])
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behaviour: 'smooth' })
@@ -113,9 +124,11 @@ export default function ChatContainer({currentChat, currentUser, socket}) {
                         }
                         
                     </div>
-                    <div className="content">
+                    <div className={`content ${message._removed ? 'removed' : ''}`}>
                       <p>
-                          {message.message}
+                        {
+                          message._removed? 'this message was removed' : message.message
+                        }
                       </p>
                     </div>
                   </div>
@@ -197,6 +210,11 @@ const Container = styled.div`
         @media screen and (min-width: 720px) and (max-width: 1080px) {
           max-width: 70%;
         }
+      }
+      .content.removed {
+        color: #6B7174;
+        font-size: 0.8rem;
+        font-style: italic;
       }
       .menu-icon {
         position: relative;

@@ -54,6 +54,8 @@ module.exports.getAllMessage = async (req, res, next) => {
                 _id: msg._id,
                 fromSelf: msg.sender.toString() === from,
                 message: msg.message.text,
+                _removed: msg._removed,
+                removedFromSelf: msg.removedFromSelf,
             }
         })
         res.json(projectMessage)

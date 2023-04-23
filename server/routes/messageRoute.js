@@ -2,7 +2,7 @@ const { addMessage, getAllMessage, updateMessage } = require('../controllers/mes
 const router = require('express').Router()
 
 router.post('/addmsg', addMessage)
-router.put('/updatemsg', updateMessage)
 router.post('/getmsg', getAllMessage)
+router.put('/updatemsg', updateMessage)
 
 module.exports = router
