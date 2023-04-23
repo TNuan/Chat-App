@@ -52,7 +52,10 @@ io.on('connection', (socket) => {
         }
     })
 
-    socket.on('remove-message', (data) => {
-
+    socket.on('update-message', (data) => {
+        const updateUserSoket = onlineUsers.get(data.to)
+        if (updateUserSoket) {
+            socket.to(updateUserSoket).emit('update-msg', data.message)
+        }
     })
 })

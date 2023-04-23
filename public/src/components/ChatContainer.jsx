@@ -3,7 +3,7 @@ import styled from 'styled-components'
 import Logout from './Logout'
 import ChatInput from './ChatInput'
 import axios from 'axios'
-import { getAllMessageRoute, sendMessageRoute } from '../utils/APIRoutes'
+import { getAllMessageRoute, sendMessageRoute, updateMessageRoute } from '../utils/APIRoutes'
 import { v4 as uuidv4 } from 'uuid'
 import { CiMenuKebab } from 'react-icons/ci'
 import { BsReply } from 'react-icons/bs'
@@ -12,6 +12,7 @@ export default function ChatContainer({currentChat, currentUser, socket}) {
 
   const [message, setMessage] = useState([])
   const [arrivalMessage, setArrivalMessage] = useState(null)
+  const [updateMessage, setUpdateMessage] = useState(null)
   const scrollRef = useRef()
 
   useEffect(() => {(async () => {
@@ -22,7 +23,6 @@ export default function ChatContainer({currentChat, currentUser, socket}) {
      })
      setMessage(response.data)
     }
-     
   })()}, [currentChat])
 
 
@@ -34,21 +34,29 @@ export default function ChatContainer({currentChat, currentUser, socket}) {
     })
 
     socket.current.emit('send-msg', {
-      to: currentChat._id,
       from: currentUser._id,
+      to: currentChat._id,
       message: msg
     })
 
     const msgs = [...message]
     msgs.push({
       fromSelf: true,
+      _removed: false,
+      removedFromSelf: false,
       message: msg
     })
     setMessage(msgs)
   }
 
-  const handleContextMenu = (message) => {
-    console.log('handleContextMenu element: ' + message._id)
+  const handleContextMenu = async (msg) => {
+    const updatedMessage = {
+      updatedMessageId: msg._id,
+      fromSelf: msg.fromSelf
+    }
+    await axios.put(updateMessageRoute, updatedMessage)
+
+    socket.current.emit('update-message', { message: msg })
   }
 
   useEffect(() => {
@@ -56,12 +64,20 @@ export default function ChatContainer({currentChat, currentUser, socket}) {
       socket.current.on('msg-recieve', (msg) => {
         setArrivalMessage({ fromSelf: false, message: msg })
       })
+      
+      socket.current.on('update-message', (msg) => {
+        setUpdateMessage(msg)
+      })
     }
   }, [])
 
   useEffect(() => {
     arrivalMessage && setMessage((prev) => [...prev, arrivalMessage])
   }, [arrivalMessage])
+
+  useEffect(() => {
+    updateMessage && setMessage((prev) => [...prev, updateMessage])
+  }, [updateMessage])
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behaviour: 'smooth' })
@@ -85,26 +101,34 @@ export default function ChatContainer({currentChat, currentUser, socket}) {
         </div>
         <div className="chat-message">
         {
-          message.map((message, index) => {
+          message.map((message) => {
               return (
                 <div ref={scrollRef} key={uuidv4()}>
-                  <div className={`message ${message.fromSelf ? 'sended' : 'recieved'}`} >
+                  <div className={`message ${message.fromSelf ? 'sended' : 'recieved'} ${message.removed ? 'removed':''}`} >
                     <div >
-                        <BsReply onClick={() => handleContextMenu(message)}/>
+                        <BsReply/>
                     </div>
-                    <div >
-                        <CiMenuKebab/>
+                    <div className='menu-icon'>
+                        <CiMenuKebab onClick={(e) => {e.target.classList.add('show-menu')}}/>
+                        {
+                          <div className='context-menu'>
+                            <ul>
+                                <li onClick={() => { 
+                                  document.querySelector('.show-menu').classList.remove('show-menu')
+                                  handleContextMenu(message)
+                                }}>remove</li>
+                                <li>reply</li>
+                                <li>forward</li>
+                              </ul>
+                          </div>
+                        }
+                        
                     </div>
-                    <div className="context-menu">
-                      <ul>
-                        <li>remove</li>
-                        <li>reply</li>
-                        <li>forward</li>
-                      </ul>
-                    </div>
-                    <div className="content">
+                    <div className={`content ${message._removed ? 'removed' : ''}`}>
                       <p>
-                          {message.message}
+                        {
+                          message._removed? 'this message was removed' : message.message
+                        }
                       </p>
                     </div>
                   </div>
@@ -117,10 +141,8 @@ export default function ChatContainer({currentChat, currentUser, socket}) {
       </Container>
       )
     }
-    </>
+    </>  
   )
-  
-  
 }
 
 const Container = styled.div`
@@ -149,7 +171,6 @@ const Container = styled.div`
       .username {
         h3 {
           color: white;
-
         }
       }
     }
@@ -190,31 +211,50 @@ const Container = styled.div`
           max-width: 70%;
         }
       }
-      .context-menu {
-        background-color: #413571;
-        width: 20%;
-        border-radius: 12px;
-        color: #ffff;
-        overflow: hidden;
-        display: none;
-        ul {
-          li {
-            cursor: pointer;
-            list-style: none;
-            padding: 0.5rem 0.5rem;
-            font-size: 1rem;
-            color: #d1d1d1;
-            &:hover {
-              color: #ffff;
-              background-color: #9a86f3;
+      .content.removed {
+        color: #6B7174;
+        font-size: 0.8rem;
+        font-style: italic;
+      }
+      .menu-icon {
+        position: relative;
+        width: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        .context-menu {
+          z-index: 100;
+          background-color: #413571;
+          width: 100px;
+          border-radius: 12px;
+          color: #ffff;
+          overflow: hidden;
+          position: absolute;
+          top: 0;
+          visibility: hidden;
+          ul {
+            li {
+              cursor: pointer;
+              list-style: none;
+              padding: 0.5rem 0.5rem;
+              font-size: 1rem;
+              color: #d1d1d1;
+              &:hover {
+                color: #ffff;
+                background-color: #9a86f3;
+              }
             }
           }
+        }
+        .show-menu + .context-menu{
+          visibility: visible;
         }
       }
     }
     .message:hover svg {
-        visibility: visible;
-      }
+      visibility: visible;
+    }
 
     .sended {
       justify-content: flex-end;
@@ -224,6 +264,9 @@ const Container = styled.div`
         -webkit-transform: scaleX(-1);
         -ms-transform: scaleX(-1);
       }
+      .context-menu {
+        right: 0;
+      }
       .content {
         background-color: #4f04ff21;
       }
@@ -231,6 +274,9 @@ const Container = styled.div`
     .recieved {
       justify-content: flex-end;
       flex-direction: row-reverse;
+      .context-menu {
+        left: 0;
+      }
       .content {
         background-color: #9900ff20;
       }
