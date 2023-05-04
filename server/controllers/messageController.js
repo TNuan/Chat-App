@@ -19,7 +19,6 @@ module.exports.addMessage = async (req, res, next) => {
 
 module.exports.updateMessage = async (req, res, next) => {
     try {
-        console.log('hi')
         const { updatedMessageId, fromSelf } = req.body
         const message = await messageModel.findOne({_id: updatedMessageId})
 
@@ -28,8 +27,6 @@ module.exports.updateMessage = async (req, res, next) => {
             _removed: true,
             removedFromSelf: fromSelf,
         }
-
-        console.log(dataUpdated)
         const updatedMessage = await messageModel.updateOne({_id: dataUpdated._id}, {$set: dataUpdated})
         if (updatedMessageId) delete updatedMessageId
         if (updatedMessage) return res.json({ msg: "Message updated successfully" })
