@@ -43,19 +43,20 @@ io.on('connection', (socket) => {
     global.chatSocket = socket
     socket.on('add-user', (userId) => {
         onlineUsers.set(userId, socket.id)
+        // console.log('a user ' + userId + ' is online')
     })
 
     socket.on('send-msg', (data) => { 
         const sendUserSocket = onlineUsers.get(data.to)
         if (sendUserSocket) {
-            socket.to(sendUserSocket).emit('msg-recieve', data.message)
+            socket.to(sendUserSocket).emit('msg-recieve', data)
         }
     })
 
     socket.on('update-message', (data) => {
         const updateUserSoket = onlineUsers.get(data.to)
         if (updateUserSoket) {
-            socket.to(updateUserSoket).emit('update-msg', data.message)
+            socket.to(updateUserSoket).emit('msg-recieve', data)
         }
     })
 })

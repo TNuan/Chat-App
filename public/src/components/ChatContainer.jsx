@@ -11,42 +11,48 @@ import { BsReply } from 'react-icons/bs'
 export default function ChatContainer({currentChat, currentUser, socket}) {
 
   const [message, setMessage] = useState([])
-  const [arrivalMessage, setArrivalMessage] = useState(null)
-  const [updateMessage, setUpdateMessage] = useState(null)
+  // const [arrivalMessage, setArrivalMessage] = useState(null)
+  // const [updateMessage, setUpdateMessage] = useState(null)
   const scrollRef = useRef()
 
   useEffect(() => {(async () => {
     if(currentChat) {
       const response = await axios.post(getAllMessageRoute, {
-      from: currentUser._id,
-      to: currentChat._id,
-     })
-     setMessage(response.data)
+        from: currentUser._id,
+        to: currentChat._id,
+      })
+      setMessage(response.data)
     }
   })()}, [currentChat])
 
 
   const handleSendMsg = async (msg) => {  
+
     await axios.post(sendMessageRoute, {
       from: currentUser._id,
       to: currentChat._id,
       message: msg
     })
-
+    
+    const response = await axios.post(getAllMessageRoute, {
+      from: currentUser._id,
+      to: currentChat._id,
+    })
+    setMessage(response.data)
+    
     socket.current.emit('send-msg', {
       from: currentUser._id,
       to: currentChat._id,
-      message: msg
+      // message: msg
     })
+    // const msgs = [...message]
+    // msgs.push({
+    //   fromSelf: true,
+    //   _removed: false,
+    //   removedFromSelf: false,
+    //   message: msg
+    // })
 
-    const msgs = [...message]
-    msgs.push({
-      fromSelf: true,
-      _removed: false,
-      removedFromSelf: false,
-      message: msg
-    })
-    setMessage(msgs)
   }
 
   const handleContextMenu = async (msg) => {
@@ -56,28 +62,40 @@ export default function ChatContainer({currentChat, currentUser, socket}) {
     }
     await axios.put(updateMessageRoute, updatedMessage)
 
-    socket.current.emit('update-message', { message: msg })
+    const response = await axios.post(getAllMessageRoute, {
+      from: currentUser._id,
+      to: currentChat._id,
+    })
+    setMessage(response.data)
+
+    socket.current.emit('update-message', { 
+      from: currentUser._id,
+      to: currentChat._id 
+    })
   }
 
   useEffect(() => {
     if(socket.current) {
-      socket.current.on('msg-recieve', (msg) => {
-        setArrivalMessage({ fromSelf: false, message: msg })
-      })
-      
-      socket.current.on('update-message', (msg) => {
-        setUpdateMessage(msg)
+      socket.current.on('msg-recieve', async (user) => {
+        // setArrivalMessage({ 
+        //   fromSelf: false, 
+        //   _removed: false,
+        //   removedFromSelf: false,
+        //   message: msg  
+        // })
+        const response = await axios.post(getAllMessageRoute, {
+          from: user.to,
+          to: user.from,
+        })
+        setMessage(response.data)
       })
     }
   }, [])
 
-  useEffect(() => {
-    arrivalMessage && setMessage((prev) => [...prev, arrivalMessage])
-  }, [arrivalMessage])
+  // useEffect(() => {
+  //   arrivalMessage && setMessage((prev) => [...prev, arrivalMessage])
+  // }, [arrivalMessage])
 
-  useEffect(() => {
-    updateMessage && setMessage((prev) => [...prev, updateMessage])
-  }, [updateMessage])
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behaviour: 'smooth' })
@@ -108,22 +126,26 @@ export default function ChatContainer({currentChat, currentUser, socket}) {
                     <div >
                         <BsReply/>
                     </div>
-                    <div className='menu-icon'>
-                        <CiMenuKebab onClick={(e) => {e.target.classList.add('show-menu')}}/>
-                        {
-                          <div className='context-menu'>
-                            <ul>
-                                <li onClick={() => { 
-                                  document.querySelector('.show-menu').classList.remove('show-menu')
-                                  handleContextMenu(message)
-                                }}>remove</li>
-                                <li>reply</li>
-                                <li>forward</li>
-                              </ul>
-                          </div>
-                        }
-                        
-                    </div>
+                    {
+                      !message._removed && <div className='menu-icon'>
+                        <CiMenuKebab onClick={(e) => {  
+                          if (document.querySelector('.show-menu')) {
+                            document.querySelector('.show-menu').classList.remove('show-menu')
+                          }
+                          e.target.classList.add('show-menu')
+                        }}/>
+                        <div className='context-menu'>
+                          <ul>
+                              <li onClick={() => { 
+                                document.querySelector('.show-menu').classList.remove('show-menu')
+                                handleContextMenu(message)
+                              }}>remove</li>
+                              <li>reply</li>
+                              <li>forward</li>
+                            </ul>
+                        </div>
+                      </div>
+                    }
                     <div className={`content ${message._removed ? 'removed' : ''}`}>
                       <p>
                         {
