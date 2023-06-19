@@ -153,7 +153,7 @@ const FormContainer = styled.div`
       background-color: transparent;
       padding: 1rem;
       border: 0.1rem solid #2D99AE;
-      boder-radius: 0.4rem;
+      border-radius: 0.4rem;
       color: white;
       width: 100%;
       font-size: 1 rem;
